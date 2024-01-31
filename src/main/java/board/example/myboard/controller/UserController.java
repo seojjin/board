@@ -8,16 +8,10 @@ import board.example.myboard.dto.user.UserRegisterDTO;
 import board.example.myboard.dto.user.UserUpdateDTO;
 import board.example.myboard.entity.UserEntity;
 import board.example.myboard.service.UserService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import net.minidev.json.JSONObject;
-import net.minidev.json.parser.JSONParser;
-import net.minidev.json.parser.ParseException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
@@ -30,14 +24,14 @@ public class UserController {
 
     @PostMapping("/register")
     public ResponseEntity<ResponseDTO> register(
-            @RequestBody UserRegisterDTO userRegisterDTO,
-            @RequestPart(value = "imgFile", required = false) String imgFile
-            )throws IOException {
+            @RequestBody UserRegisterDTO userRegisterDTO
+            ) throws IOException
+    {
 
-        if(imgFile==null){
-            imgFile="";
+        if(userRegisterDTO.getProfileImage()==null){
+            userRegisterDTO.setProfileImage("");
         }
-        userRegisterDTO.setProfileImage(imgFile);
+
         GetUser res = userService.register(userRegisterDTO);
 
         return ResponseEntity
@@ -65,30 +59,9 @@ public class UserController {
 
     @PutMapping("/update")
     public ResponseEntity<ResponseDTO> update(
-            @RequestParam(value="image", required = false) MultipartFile profileImage,
-            @RequestParam(value="info") String userUpdateDTO) throws IOException, ParseException {
-
-        // mapper
-        ObjectMapper mapper = new ObjectMapper();
-        UserUpdateDTO mapperUploadPostDTO = mapper.readValue(userUpdateDTO, UserUpdateDTO.class);
-
-        // 이미지 등록
-        if (profileImage != null && profileImage.getResource().contentLength() != 0){
-            // parse
-            JSONParser parser = new JSONParser();
-            JSONObject object = (JSONObject) parser.parse(userUpdateDTO);
-            String userId = object.get("userId").toString();
-
-            // 예전 유저의 프로필 이미지 삭제
-
-
-            // 이미지 업로드
-
-
-            // updateUserProfileDTO 객체에 프로필 정보 설정
-
-        }
-        UserEntity res = userService.update(mapperUploadPostDTO);
+            @RequestBody UserUpdateDTO UserUpdateDTO) throws IOException
+    {
+        UserEntity res = userService.update(UserUpdateDTO);
         return ResponseEntity
                 .status(ResponseCode.SUCCESS_UPDATE_PROFILE.getStatus().value())
                 .body(new ResponseDTO(ResponseCode.SUCCESS_UPDATE_PROFILE, res));

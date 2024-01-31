@@ -1,6 +1,8 @@
 package board.example.myboard.service;
 
 import board.example.myboard.base.code.ErrorCode;
+import board.example.myboard.base.exception.LoginIdNotFoundException;
+import board.example.myboard.base.exception.LoginPasswordNotMatchException;
 import board.example.myboard.base.projection.GetUser;
 import board.example.myboard.dto.user.UserLoginDTO;
 import board.example.myboard.dto.user.UserRegisterDTO;
@@ -31,15 +33,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    GetUser login(UserLoginDTO userLoginDTO) {
+    public GetUser login(UserLoginDTO userLoginDTO) {
         Optional<UserEntity> findUser = userRepository.findByLoginId(userLoginDTO.loginId);
 
         //아이디가 존재하는지 확인
         if(!findUser.isPresent()) throw new LoginIdNotFoundException(ErrorCode.USERID_NOT_FOUND);
         //비밀번호가 같은지 확인
+        else if(!findUser.get().getPassword().equals(userLoginDTO.password)) throw new LoginPasswordNotMatchException(ErrorCode.PASSWORD_NOT_MATCH);
 
         GetUser user = EntityToProjectionUser(findUser.get());
-        return super.login(userLoginDTO);
+        return user;
     }
 
     @Override
@@ -51,9 +54,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    UserEntity update(UserUpdateDTO mapperUploadPostDTO) {
+    public UserEntity update(UserUpdateDTO userUpdateDTO) {
+        Optional<UserEntity> updateUser = userRepository.findByUserId(userUpdateDTO.getUserId());
+        updateUser.get().setProfileImage(userUpdateDTO.getProfileImage());
+        updateUser.get().setIntroduction(userUpdateDTO.getIntroduction());
+        updateUser.get().setGoal(userUpdateDTO.getGoal());
 
-        return super.update(mapperUploadPostDTO);
+        return userRepository.save(updateUser.get());
     }
 
     private GetUser EntityToProjectionUser(UserEntity user){
@@ -90,7 +97,6 @@ public class UserServiceImpl implements UserService {
             }
 
         };
-
            return userInfo;
     }
 }
